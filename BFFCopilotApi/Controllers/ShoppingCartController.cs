@@ -1,4 +1,6 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using BFFCopilotApi.Models;
+using BFFCopilotApi.Services;
+using Microsoft.AspNetCore.Mvc;
 
 namespace BFFCopilotApi.Controllers
 {
@@ -7,14 +9,16 @@ namespace BFFCopilotApi.Controllers
     public class ShoppingCartController : ControllerBase
     {
         private readonly IProfileManagement _profileManagement;
+        private readonly ICartService _cartService;
 
-        public ShoppingCartController(IProfileManagement profileManagement)
+        public ShoppingCartController(IProfileManagement profileManagement,ICartService cartService)
         {
             _profileManagement = profileManagement;
+            _cartService = cartService;
         }
 
         [HttpPost("CreateProfile")]
-        public IActionResult CreateProfile([FromBody] User user)
+        public async Task<IActionResult> CreateProfile([FromBody] User user)
         {
             var userId = _profileManagement.CreateProfile(user);
             if (userId.Result > 0)
@@ -28,7 +32,7 @@ namespace BFFCopilotApi.Controllers
         }
 
         [HttpPut("UpdateProfile/{userId}")]
-        public IActionResult UpdateProfile(int userId, [FromBody] User updatedUser)
+        public async Task<IActionResult> UpdateProfile(int userId, [FromBody] User updatedUser)
         {
             var success = _profileManagement.UpdateUserId(userId, updatedUser);
             if (success.Result)
@@ -41,17 +45,46 @@ namespace BFFCopilotApi.Controllers
             }
         }
 
+
         [HttpGet("GetProfile/{userId}")]
-        public IActionResult GetProfile(int userId)
+        public async Task<IActionResult> GetProfile(int userId)
         {
-            var user = _profileManagement.GetUserById(userId);
-            if (user != null)
+            var user = await _profileManagement.GetUserById(userId);
+            if (user == null)
             {
-                return Ok(user);
+                return NotFound("Profile not found."); // Ensure this is returned when user is null
             }
             else
             {
-                return NotFound("Profile not found.");
+                return Ok(user);
+            }
+        }
+
+        [HttpPost("AddCartItem")]
+        public async Task<IActionResult> AddCartItem([FromBody] Product product, [FromQuery] int userId)
+        {
+            await _cartService.AddCartItem(product, new User { UserId = userId });
+            return Ok("Item added to cart successfully.");
+        }
+
+        [HttpPost("UpdateCartItem")]
+        public async Task<IActionResult> UpdateCartItem([FromBody] Product product, [FromQuery] int userId)
+        {
+            await _cartService.UpdateCartItem(product, new User { UserId = userId });
+            return Ok("Cart item updated successfully.");
+        }
+
+        [HttpPost("Checkout")]
+        public async Task<IActionResult> Checkout([FromBody] ICollection<CartItem> cartItems, [FromQuery] int userId)
+        {
+            var success = await _cartService.Checkout(cartItems, userId);
+            if (success)
+            {
+                return Ok("Checkout successful.");
+            }
+            else
+            {
+                return BadRequest("Checkout failed.");
             }
         }
     }

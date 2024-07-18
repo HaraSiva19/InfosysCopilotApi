@@ -8,5 +8,7 @@
 
         public decimal Price { get; set; } // Added Price property
 
+        public int Stock { get; set; } // Added Stock property
+
     }
 }
