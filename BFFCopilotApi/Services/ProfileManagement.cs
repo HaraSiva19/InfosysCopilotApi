@@ -5,10 +5,11 @@ namespace BFFCopilotApi.Services
     public class ProfileManagement : IProfileManagement
     {
         private readonly DataContext _context;
-
-        public ProfileManagement(DataContext context)
+        private readonly IServiceProvider _serviceProvider;
+        public ProfileManagement(IServiceProvider serviceProvider,DataContext context)
         {
             _context = context;
+            _serviceProvider = serviceProvider;
         }
 
         public async Task<int> CreateProfile(User user)
@@ -38,6 +39,16 @@ namespace BFFCopilotApi.Services
         {
             var user = await _context.Users.FirstOrDefaultAsync(u => u.UserId == userId);
             return user;
+        }
+
+        public void CreateProfileData()
+        {
+            DataGenerator.Initialize(_serviceProvider);
+        }
+
+        public async Task<List<User>> ViewAllUsers()
+        {
+            return await _context.Users.ToListAsync();
         }
     }
 }

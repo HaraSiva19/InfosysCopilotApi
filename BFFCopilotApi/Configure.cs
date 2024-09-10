@@ -9,8 +9,9 @@ namespace BFFCopilotApi
         public static void ConfigureServices(this IServiceCollection services)
         {
             services.AddScoped<IProfileManagement, ProfileManagement>();
-            
+            services.AddScoped<ICartService, CartService>();
             services.AddDbContext<DataContext>(options => options.UseInMemoryDatabase(databaseName: "ShoppingCart"));
+            
             //services.AddMvc().SetCompatibilityVersion(CompatibilityVersion.Version_2_2);
         }
 

@@ -26,6 +26,15 @@ namespace BFFCopilotApi.Services
             await _context.SaveChangesAsync();
         }
 
+        public async Task<IEnumerable<CartItem>> ViewCartItem(int userId)
+        {
+            // Retrieve cart items for the specified user
+            return await _context.CartItems
+                .Include(ci => ci.Product) // Include related product details
+                .Where(ci => ci.CustomerId == userId)
+                .ToListAsync();
+        }
+
         public async Task UpdateCartItem(Product product, User user)
         {
             var cartItem = await _context.CartItems

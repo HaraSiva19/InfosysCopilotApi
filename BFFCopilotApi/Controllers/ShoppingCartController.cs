@@ -1,20 +1,33 @@
 ﻿using BFFCopilotApi.Models;
 using BFFCopilotApi.Services;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace BFFCopilotApi.Controllers
 {
     [ApiController]
     [Route("[controller]")]
+  
     public class ShoppingCartController : ControllerBase
     {
         private readonly IProfileManagement _profileManagement;
-        private readonly ICartService _cartService;
+        private readonly ICartService _cartService; 
+       
 
         public ShoppingCartController(IProfileManagement profileManagement,ICartService cartService)
         {
+          
             _profileManagement = profileManagement;
             _cartService = cartService;
+           
+        }
+
+        [HttpPost("CreateProfileData")]
+        public async Task<IActionResult> CreateProfileData()
+        {
+            _profileManagement.CreateProfileData();
+
+            return await ViewAllProfile();
         }
 
         [HttpPost("CreateProfile")]
@@ -60,6 +73,20 @@ namespace BFFCopilotApi.Controllers
             }
         }
 
+        [HttpGet("ViewAllProfile")]
+        public async Task<IActionResult> ViewAllProfile()
+        {
+            var user = await _profileManagement.ViewAllUsers();
+            if (user == null)
+            {
+                return NotFound("Profile not found."); // Ensure this is returned when user is null
+            }
+            else
+            {
+                return Ok(user);
+            }
+        }
+
         [HttpPost("AddCartItem")]
         public async Task<IActionResult> AddCartItem([FromBody] Product product, [FromQuery] int userId)
         {
@@ -86,6 +113,19 @@ namespace BFFCopilotApi.Controllers
             {
                 return BadRequest("Checkout failed.");
             }
+        }
+
+        // GET: api/ShoppingCart/ViewCartItems/{userId}
+        [HttpGet("ViewCartItems/{userId}")]
+        public async Task<IActionResult> ViewCartItems(int userId)
+        {
+            var cartItems = await _cartService.ViewCartItem(userId);
+            if (cartItems == null)
+            {
+                return NotFound("No cart items found for the specified user.");
+            }
+
+            return Ok(cartItems);
         }
     }
 }
